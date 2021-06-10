@@ -129,8 +129,10 @@ vector<int> solveInteger(map<int, line > &resources, line &values) {
             if (abs(x - (int) x) < EPS)
                 found = true;
         }
-        if (!found)
+        if (!found) {
+            cout << "No Solution";
             return {};
+        }
 
         int newB = values.size() - 1;
 
