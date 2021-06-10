@@ -1,8 +1,8 @@
 #include <bits/stdc++.h>
 
 /**
- * 18.03.2021
- * doubleSimplex
+ * 10.06.2021
+ * integerSimplex
  *
  * @author Havlong
  * @version v1.0
@@ -12,6 +12,7 @@
 #define line vector<double>
 #define matrix vector<vector<double>>
 #define ALL(x) x.begin(), x.end()
+const double EPS = 1e-5;
 
 using namespace std;
 
@@ -27,7 +28,7 @@ void printTable(const map<int, line > &resources, const line &values) {
     for (const auto &z : values) {
         cout << z << ' ';
     }
-    cout << "\n\n";
+    cout << "\n" << endl;
 }
 
 const double INF = 1e18;
@@ -54,13 +55,13 @@ void swapBasisVariables(map<int, line > &resources, line &values, const int &fro
 
 line solveDoubleSimplex(map<int, line > &resources, line &values) {
 
-    while (!all_of(ALL(values), [](const double &x) { return x >= 0; })) {
+    while (!all_of(ALL(values), [](const double &x) { return x >= 0; }) || !all_of(ALL(resources), [](const pair<int, line > &x) { return x.second.back() >= 0; })) {
         if (all_of(ALL(resources), [](const pair<int, line > &x) { return x.second.back() >= 0; })) {
             int toBasis = min_element(values.begin(), values.end() - 1) - values.begin();
             int fromBasis = resources.size();
             double simplexValue = INF;
             for (auto &[basis, coeffs]: resources) {
-                if (coeffs[toBasis] <= 0)
+                if (coeffs[toBasis] <= EPS)
                     continue;
                 double newValue = coeffs.back() / coeffs[toBasis];
                 if (newValue > 0 && newValue < simplexValue) {
@@ -114,8 +115,9 @@ vector<int> solveInteger(map<int, line > &resources, line &values) {
         line d = solveDoubleSimplex(resources, values);
         if (d.empty())
             return {};
-        int v = max_element(ALL(d), [](double x, double y) { return x - (int) x < y - (int) y; }) - d.begin();
-        if (d[v] - (int) v == 0) {
+        int basisToDiffer =
+                max_element(ALL(d), [](double x, double y) { return x - (int) x < y - (int) y; }) - d.begin();
+        if (d[basisToDiffer] - (int) basisToDiffer == 0) {
             vector<int> ans(d.size());
             for (int i = 0; i < d.size(); ++i) {
                 ans[i] = (int) d[i];
@@ -123,22 +125,34 @@ vector<int> solveInteger(map<int, line > &resources, line &values) {
             return ans;
         }
         bool found = false;
-        for (const auto &x: resources[v]) {
-            if (x - (int) x != 0)
+        for (const auto &x: resources[basisToDiffer]) {
+            if (abs(x - (int) x) < EPS)
                 found = true;
         }
         if (!found)
             return {};
-        auto it = resources[v].end();
-        it--;
-        int to = max_element(resources[v].begin(), it, [](double x, double y) { return x - (int) x < y - (int) y; }) -
-                 resources[v].begin();
+
+        int newB = values.size() - 1;
+
+        double value = values.back();
+        values.pop_back();
         values.push_back(0);
-        int newB = values.size();
-        resources[newB] = line(newB + 1);
-        for (int i = 0; i < values.size(); ++i) {
-            resources[]
+        values.push_back(value);
+
+        for (auto &[basis, coeffs]: resources) {
+            double v = coeffs.back();
+            coeffs.pop_back();
+            coeffs.push_back(0);
+            coeffs.push_back(v);
         }
+        resources[newB] = line(values.size());
+        for (int i = 0; i < values.size(); ++i) {
+            double x = (int) resources[basisToDiffer][i] - resources[basisToDiffer][i];
+            resources[newB][i] = x;
+        }
+        resources[newB][newB] = 1;
+
+        printTable(resources, values);
     }
 }
 

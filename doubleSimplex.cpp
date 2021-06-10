@@ -12,6 +12,7 @@
 #define line vector<double>
 #define matrix vector<vector<double>>
 #define ALL(x) x.begin(), x.end()
+const double EPS = 1e-5;
 
 using namespace std;
 
@@ -27,7 +28,7 @@ void printTable(const map<int, line > &resources, const line &values) {
     for (const auto &z : values) {
         cout << z << ' ';
     }
-    cout << "\n\n";
+    cout << "\n" << endl;
 }
 
 const double INF = 1e18;
@@ -54,13 +55,13 @@ void swapBasisVariables(map<int, line > &resources, line &values, const int &fro
 
 line solveDoubleSimplex(map<int, line > &resources, line &values) {
 
-    while (!all_of(ALL(values), [](const double &x) { return x >= 0; })) {
+    while (!all_of(ALL(values), [](const double &x) { return x >= 0; }) || !all_of(ALL(resources), [](const pair<int, line > &x) { return x.second.back() >= 0; })) {
         if (all_of(ALL(resources), [](const pair<int, line > &x) { return x.second.back() >= 0; })) {
             int toBasis = min_element(values.begin(), values.end() - 1) - values.begin();
             int fromBasis = resources.size();
             double simplexValue = INF;
             for (auto &[basis, coeffs]: resources) {
-                if (coeffs[toBasis] <= 0)
+                if (coeffs[toBasis] <= EPS)
                     continue;
                 double newValue = coeffs.back() / coeffs[toBasis];
                 if (newValue > 0 && newValue < simplexValue) {
